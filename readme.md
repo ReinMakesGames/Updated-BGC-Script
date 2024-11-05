@@ -11,26 +11,14 @@ The script is hard coded for 1920x1080 game resolution.
 
 ### Features
 - Hold F to pick up loot
-- Auto attack mode (disables automatically in a menu)
-    - hold LMB to perform normal attacks
-    - click or hold RMB to perform charged attack
 - Receive all rewards from expeditions (Numpad1)
-- Send characters on expeditions (Numpad2)
 - Receive battle pass experience and rewards (Numpad .)
-- Go to the serenitea pot (Numpad5)
-- Relogin (Numpad3)
-- Wait for the next night (Numpad7) or morning (Alt + Numpad7)
-- Change current party (Numpad4 - previous, Numpad6 - next)
+- Go to the serenitea pot ([)
+- Logout (=)
 - Teleport in one click (move your cursor to desirable location on the world map and click Middle mouse button)
-- Spam LMB click (XButton2) 
-- Lock artifact (Numpad8, works only in the bag menu)
 - Craft maximum amount of ores (Numpad9, works in the blacksmith menu)
-- You can hold 1-4 to switch characters instead of clicking  
 - Pauses when the game window is not active (or explicitly on Pause key)
 - Closes when the game is closed
-
-### Not so fair features
-- Auto unfreeze/unbubble
 - Animation cancelling for Klee (XButton1)
 
 ### Additional info
