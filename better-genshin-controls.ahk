@@ -1,14 +1,23 @@
-﻿#NoEnv
+#NoEnv
 #SingleInstance Force
 #MaxHotkeysPerInterval 100
 #InstallKeybdHook
 #InstallMouseHook
 #Include lib.ahk
 
+
+
 SendMode Event
 SetWorkingDir %A_ScriptDir%
 SetKeyDelay 0
 SetMouseDelay 0
+
+if !ProcessExist("GenshinImpact.exe")
+{
+    ; Run the game only if it's not already running
+    Run, C:\Program Files\Genshin Impact\Genshin Impact game\GenshinImpact.exe ; Change this if you have a different directory
+    Sleep, 3000
+}
 
 ; Rerun script with administrator rights if required.
 if (!A_IsAdmin) {
@@ -26,36 +35,12 @@ if (!A_IsAdmin) {
 
 ContextualBindingsEnabled := false
 
-; Expedition duration coordinates
-Duration4H := { X: 1500, Y: 700 }
-Duration20H := { X: 1800, Y: 700 }
-
-; Expetitions (crystals)
-WhisperingWoodsExpedition := { MapNumber: 0, X: 1050, Y: 330 }
-DadaupaGorgeExpedition := { MapNumber: 0, X: 1170, Y: 660 }
-YaoguangShoalExpedition := { MapNumber: 1, X: 950, Y: 450 }
-
-; Expetitions (mora)
-StormterrorLairExpedition := { MapNumber: 0, X: 550, Y: 400 }
-DihuaMarshExpedition := { MapNumber: 1, X: 728, Y: 332 }
-JueyunKarstExpedition := { MapNumber: 1, X: 559, Y: 561 }
-JinrenIslandExpedition := { MapNumber: 2, X: 1097, Y: 274 }
-TarasunaExpedition := { MapNumber: 2, X: 828, Y: 828 }
-
-; Expetitions (food)
-WindriseExpedition := { MapNumber: 0, X: 1111, Y: 455 }
-GuiliPlainsExpedition := { MapNumber: 1, X: 800, Y: 550 }
-
-
-
 ; =======================================
 ; Script initialization
 ; =======================================
-
 SetTimer, SuspendOnGameInactive, -1
 SetTimer, ExitOnGameClose, 5000
 SetTimer, ConfigureContextualBindings, 250
-SetTimer, Unfreeze, 250 ; if interval is less than 250ms, timer becomes buggy, especially during a reload
 
 
 
@@ -113,44 +98,14 @@ ConfigureContextualBindings() {
 
     if (!ContextualBindingsEnabled && HpBarFound && !FishingActive) {
         ; enable bindings
-        Hotkey, *~LButton, NormalAutoAttack, On
-        Hotkey, *RButton, StrongAttack, On
         Hotkey, ~$*f, Loot, On
         ContextualBindingsEnabled := true
     } else if (ContextualBindingsEnabled && (!HpBarFound || FishingActive)) {
         ; disable bindings
-        Hotkey, *~LButton, NormalAutoAttack, Off
-        Hotkey, *RButton, StrongAttack, Off
         Hotkey, ~$*f, Loot, Off
         ContextualBindingsEnabled := false
     }
 }
-
-
-
-; =======================================
-; Auto attack
-; =======================================
-
-NormalAutoAttack() {
-    while(GetKeyState("LButton", "P")) {
-        MouseClick, left
-        Sleep, 150
-    }
-}
-
-StrongAttack() {
-    Click, down
-    KeyWait, RButton
-    TimeSinceKeyPressed := A_TimeSinceThisHotkey
-    if (TimeSinceKeyPressed < 350) {
-        ; hold LMB minimum for 350ms
-        Sleep, % 350 - TimeSinceKeyPressed
-    }
-    Click, up
-}
-
-
 
 ; =======================================
 ; Hold F to loot
@@ -165,154 +120,61 @@ Loot() {
     }
 }
 
-
-
-; =======================================
-; Spam left click
-; =======================================
-
-XButton2::
-    while(GetKeyState("XButton2" ,"P")) {
-        MouseClick, left
-        Sleep, 20
-    }
-return
-
-
-
-; =======================================
-; Change character group
-; =======================================
-
-Numpad4::
-    ChangeParty("left")
-return
-
-Numpad6::
-    ChangeParty("right")
-return
-
-
-ChangeParty(Direction) {
-    Send, {l}
-    WaitFullScreenMenu(5000)
-    if (Direction = "left") {
-        MouseClick, left, 75, 539
-    } else {
-        MouseClick, left, 1845, 539
-    }
-
-    WaitDeployButtonActive(1000)
-    MouseClick, left, 1700, 1000 ; press Deploy button
-
-    WaitPixelColor("0xFFFFFF", 836, 491, 2000) ; wait for "Party deployed" notification
-    Send, {Esc}
-}
-
-
-
 ; =======================================
 ; Expeditions
 ; =======================================
 
 ; Recieve all the rewards
 Numpad1::
-    ReceiveReward(StormterrorLairExpedition, 1000)
-    ReceiveReward(DihuaMarshExpedition)
-    ReceiveReward(JueyunKarstExpedition)
-    ReceiveReward(JinrenIslandExpedition)
-    ReceiveReward(TarasunaExpedition)
+    MouseClick Left, 169, 1020
+    Sleep 900
+    MouseClick Left, 1150, 1008
+    Sleep 20
+    Send, {Esc}
 return
 
-; Send everyone to the expedition
-Numpad2::
-    Duration := Duration20H
-    SendOnExpedition(StormterrorLairExpedition, 3, Duration)
-    SendOnExpedition(DihuaMarshExpedition, 3, Duration)
-    SendOnExpedition(JueyunKarstExpedition, 4, Duration)
-    SendOnExpedition(JinrenIslandExpedition, 5, Duration)
-    SendOnExpedition(TarasunaExpedition, 6, Duration)
+; =======================================
+; Artifact animation cancel
+; =======================================
+
+Numpad5::
+    if(!HpBarFound){
+        MouseGetPos, X, Y
+        MouseClick, left, 1780, 760
+        Sleep, 200
+        MouseClick, left, 1780, 1015
+        Sleep, 200
+        MouseClick, left, 150, 150
+        Sleep, 150
+        MouseClick, left, 180, 230
+        Sleep, 150
+        MouseMove, X, Y
+    }
 return
 
-SelectExpedition(Expedition) {
-    ; Click on the world
-    WorldY := 160 + (Expedition["MapNumber"] * 72) ; initial position + offset between lines
-    MouseClick, left, 200, WorldY
+
+; =======================================
+; Change account
+; =======================================
+
+=::
+    Send, {Esc}
+    Sleep 500
+    MouseMove, 45, 1025
+    Sleep, 200
+    Click, left
     Sleep, 500
-
-    ; Click on the expedition
-    MouseClick, left, Expedition["X"], Expedition["Y"]
-    Sleep, 200
-}
-
-SelectDuration(Duration) {
-    MouseClick, left, Duration["X"], Duration["Y"]
+    MouseMove, 1200, 760
     Sleep, 100
-}
-
-; Send character to an expedition.
-; CharacterNumberInList - starts from 1.
-SendOnExpedition(Expedition, CharacterNumberInList, Duration) {
-    SelectExpedition(Expedition)
-
-    SelectDuration(Duration)
-
-    ; Click on "Select Character"
-    ClickOnBottomRightButton()
-    Sleep, 1500
-
-    ; Find and select the character
-    FindAndSelectCharacter(CharacterNumberInList)
-    Sleep, 300
-}
-
-FindAndSelectCharacter(CharacterNumberInList) {
-    FirstCharacterX := 100
-    FirstCharacterY := 150
-    SpacingBetweenCharacters := 125
-
-    if (CharacterNumberInList <= 7) {
-        MouseClick, left, FirstCharacterX, FirstCharacterY + (SpacingBetweenCharacters * (CharacterNumberInList - 1))
-    } else {
-        ScrollDownCharacterList(CharacterNumberInList - 7.5)
-        MouseClick, left, FirstCharacterX, FirstCharacterY + (SpacingBetweenCharacters * 7)
-    }
-}
-
-; Scroll down the passed number of characters
-ScrollDownCharacterList(CharacterAmount) {
-    MouseMove, 950, 540
-
-    ScrollAmount := CharacterAmount * 7
-    Loop %ScrollAmount% {
-        Send, {WheelDown}
-        Sleep, 10
-    }
-}
-
-ReceiveReward(Expedition, ReceiveRewardLag := 0) {
-    SelectExpedition(Expedition)
-
-    ; receive reward
-    ClickOnBottomRightButton()
-    Sleep, 200
-    Sleep, ReceiveRewardLag
-
-    ;skip reward menu
-    ClickOnBottomRightButton()
-    Sleep, 200
-}
-
-
-; =======================================
-; Lock artifact
-; =======================================
-
-Numpad8::
-    MouseGetPos, X, Y
-    MouseClick, left, 1738, 440
-    Sleep, 50
-    MouseClick, left, X, Y
+    Click, left
+    Sleep, 4500 ; login screen
+    MouseMove, 1825, 980 ; logout button
+    Sleep, 100
+    Click, left
+    Sleep, 550
+    MouseMove, 1090, 590 ; ok button
+    Sleep, 100
+    Click, left
 return
 
 
@@ -322,168 +184,24 @@ return
 ; =======================================
 
 Numpad9::
-    MouseClick, left, 1467, 669 ; max stacks
+    MouseClick, left, 1178, 600 ; max stacks
     Sleep, 50
     ClickOnBottomRightButton()
 return
 
-
-
 ; =======================================
-; Go to the Serenitea Pot
+; Purchase max
 ; =======================================
 
-Numpad5::
-    OpenInventory()
-
-    MouseClick, left, 1050, 50 ; gadgets tab
-    WaitPixelColor("0xD3BC8E", 1055, 92, 1000) ; wait for tab to be active
-
-    MouseClick, left, 270, 180 ; select first gadget
+Numpad8::
     ClickOnBottomRightButton()
-
-    WaitDialogMenu()
-    Send, {f}
+    ; Sleep 400
+    ; MouseClick, left, 1178, 600 ; max stacks
+    Sleep 200
+    MouseClick, left, 1170, 790
+    Sleep 300
+    Click
 return
-
-
-
-; =======================================
-; Relogin
-; =======================================
-
-Numpad3::
-    OpenMenu()
-
-    MouseClick, left, 49, 1022 ; logout button
-    WaitPixelColor("0x313131", 1017, 757, 5000) ; wait logout menu
-
-    MouseClick, left, 1197, 759 ; confirm
-    WaitPixelColor("0x222222", 1823, 794, 10000) ; wait for settings icon
-
-    MouseClick, left, 500, 500
-    Sleep, 500 ; time for settings icon to disappear
-    WaitPixelColor("0x222222", 1823, 794, 15000) ; wait for settings icon again
-
-    MouseClick, left, 600, 500
-return
-
-
-
-; =======================================
-; Hold 1-4 to switch character
-; =======================================
-
-~*1::
-    while(GetKeyState("1", "P")) {
-        Send, {1}
-        Sleep, 100
-    }
-return
-
-~*2::
-    while(GetKeyState("2", "P")) {
-        Send, {2}
-        Sleep, 100
-    }
-return
-
-~*3::
-    while(GetKeyState("3", "P")) {
-        Send, {3}
-        Sleep, 100
-    }
-return
-
-~*4::
-    while(GetKeyState("4", "P")) {
-        Send, {4}
-        Sleep, 100
-    }
-return
-
-
-; =======================================
-; Klee animation cancelling
-; =======================================
-
-*XButton1::
-    while(GetKeyState("XButton1", "P")) {
-        Click
-        Sleep, 35
-        Send, {Space}
-        Sleep, 550
-    }
-return
-
-
-; =======================================
-; Wait for the next night
-; =======================================
-
-Numpad7::
-    WaitUntilInGameTime("18")
-return
-
-!Numpad7::
-    WaitUntilInGameTime("06")
-return
-
-WaitUntilInGameTime(Time) {
-    OpenMenu()
-
-    MouseClick, left, 45, 715 ; clock icon
-    WaitPixelColor("0xECE5D8", 1870, 50, 5000) ; wait for clock menu
-
-    ClockCenterX := 1440
-    ClockCenterY := 501
-    Offset := 30
-
-    if (Time = "18") {
-        ClickOnClock(ClockCenterX, ClockCenterY + Offset) ; 00:00
-        ClickOnClock(ClockCenterX - Offset, ClockCenterY) ; 06:00
-        ClickOnClock(ClockCenterX, ClockCenterY - Offset) ; 12:00
-        ClickOnClock(ClockCenterX + Offset, ClockCenterY) ; 18:00
-    } else if (Time = "06") {
-        ClickOnClock(ClockCenterX, ClockCenterY - Offset) ; 12:00
-        ClickOnClock(ClockCenterX + Offset, ClockCenterY) ; 18:00
-        ClickOnClock(ClockCenterX, ClockCenterY + Offset) ; 00:00
-        ClickOnClock(ClockCenterX - Offset, ClockCenterY - 1) ; 06:00
-    } else {
-        throw "Unexpected time argument" . Time
-    }
-
-    MouseClick, left, 1440, 1000 ; "Confirm" button
-
-    Sleep, 100
-    WaitPixelColor("0xECE5D8", 1870, 50, 30000) ; wait for clock menu
-
-    Send, {Esc}
-    WaitMenu()
-
-    Send, {Esc}
-}
-
-ClickOnClock(X, Y) {
-    SendEvent, {Click %X% %Y% Down}
-    Sleep, 50
-    SendEvent, {Click %X% %Y% Up}
-    Sleep, 100
-}
-
-
-
-; =======================================
-; Auto unfreeze
-; =======================================
-
-Unfreeze() {
-    while (IsFrozen()) {
-        Send, {Space}
-        Sleep, 68
-    }
-}
-
 
 ; =======================================
 ; Receive all BP exp and rewards
@@ -547,7 +265,42 @@ ReceiveBpRewards() {
     WaitFullScreenMenu()
 }
 
+; =======================================
+; Teleport in sereneti teapot
+; =======================================
 
+[::
+    if (!IsFullScreenMenuOpen()) {
+        Send M
+        Sleep 500
+    }
+    ClickOnBottomRightButton()
+    Sleep 500
+    MouseClick, Left, 1400, 690 ; Serenitea pot
+    Sleep 600
+    PixelSearch, FoundX, FoundY, 0, 0, 1299, 1080, 0xFDCA00, 10, "Fast RGB"
+    if (ErrorLevel = 0)
+    {
+        Sleep 10
+        MouseClick, Left, FoundX, FoundY
+        Sleep 500
+        PixelSearch, FoundX, FoundY, 1298, 460, 1299, 1080, 0xFFFFFF, 10, "Fast RGB"
+        if (ErrorLevel = 0)
+        {
+            MouseClick, Left, FoundX, FoundY
+            Sleep 200
+            ClickOnBottomRightButton()
+            Sleep 10
+            MoveCursorToCenter()
+        } else {
+            MoveCursorToCenter()
+        }
+    } else {
+        MoveCursorToCenter()
+    }
+        
+    
+return
 
 ; =======================================
 ; Teleport in one click
@@ -577,7 +330,9 @@ ReceiveBpRewards() {
         TeleportablePointColors := [ "0x2D91D9" ; Teleport waypoint
             , "0x99ECF5"                        ; Statue of The Seven
             , "0x05EDF6"                        ; Domain
-            , "0x00FFFF" ]                      ; One-time dungeon
+            , "0x00FFFF"                        ; One-time dungeon
+            , "0X0CF3F5"                        ; Temp waypoint
+            , "0xFFCC00" ]                      ; Serenitea teapot teleport
 
         for Index, TeleportablePointColor in TeleportablePointColors {
             Teleported := FindIconAndTeleport(TeleportablePointColor)
@@ -602,4 +357,9 @@ FindIconAndTeleport(IconPixelColor) {
     ClickOnBottomRightButton()
     Sleep, 50
     return true
+}
+
+ProcessExist(name) {
+    Process, Exist, %name%
+    return ErrorLevel
 }
